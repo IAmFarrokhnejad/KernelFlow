@@ -54,6 +54,23 @@ async def process_and_stream(img: np.ndarray, filter_name: str, params: dict):
             float_img = img_as_float(temp)
             restored = richardson_lucy(float_img, psf, iterations=10)
             temp = (restored * 255).clip(0, 255).astype(np.uint8)
+        elif filter_name == "sobel":
+            gray = cv2.cvtColor(temp[:row], cv2.COLOR_BGR2GRAY) if len(temp.shape) == 3 else temp[:row]
+            sobelx = cv2.Sobel(gray, cv2.CV_64F, 1, 0, ksize=3)
+            sobely = cv2.Sobel(gray, cv2.CV_64F, 0, 1, ksize=3)
+            magnitude = cv2.magnitude(sobelx, sobely)
+            magnitude = cv2.convertScaleAbs(magnitude)
+            temp[:row] = cv2.cvtColor(magnitude, cv2.COLOR_GRAY2BGR)
+
+        elif filter_name == "prewitt":
+            gray = cv2.cvtColor(temp[:row], cv2.COLOR_BGR2GRAY) if len(temp.shape) == 3 else temp[:row]
+            kernelx = np.array([[-1, 0, 1], [-1, 0, 1], [-1, 0, 1]], dtype=np.float32)
+            kernely = np.array([[-1, -1, -1], [0, 0, 0], [1, 1, 1]], dtype=np.float32)
+            prewittx = cv2.filter2D(gray.astype(np.float32), -1, kernelx)
+            prewitty = cv2.filter2D(gray.astype(np.float32), -1, kernely)
+            magnitude = cv2.magnitude(prewittx, prewitty)
+            magnitude = cv2.convertScaleAbs(magnitude)
+            temp[:row] = cv2.cvtColor(magnitude, cv2.COLOR_GRAY2BGR)
         elif filter_name == "custom":
             kernel = np.array(params["kernel"], dtype=np.float32)
             temp = cv2.filter2D(temp, -1, kernel)

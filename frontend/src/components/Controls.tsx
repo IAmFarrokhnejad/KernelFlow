@@ -10,19 +10,21 @@ export default function Controls({
   customKernel, setCustomKernel
 }: any) {
 
-  const filters = [
-    {value: "gaussian",    label: "Gaussian Filter"},
-    {value: "median",      label: "Median Filter"},
-    {value: "bilateral",   label: "Bilateral Filter"},
-    {value: "nonlocal",    label: "Non-Local Means"},
-    {value: "guided",      label: "Guided Filter"},
-    {value: "unsharp",     label: "Unsharp Masking"},
-    {value: "highboost",   label: "High-Boost Filtering"},
-    {value: "log",         label: "LoG / Mexican Hat"},
-    {value: "wiener",      label: "Wiener Deconvolution"},
-    {value: "richardson",  label: "Richardson-Lucy"},
-    {value: "custom",      label: "Custom 3×3 Mask"},
-  ];
+const filters = [
+  {value: "gaussian",    label: "Gaussian Filter"},
+  {value: "median",      label: "Median Filter"},
+  {value: "bilateral",   label: "Bilateral Filter"},
+  {value: "nonlocal",    label: "Non-Local Means"},
+  {value: "guided",      label: "Guided Filter"},
+  {value: "unsharp",     label: "Unsharp Masking"},
+  {value: "highboost",   label: "High-Boost Filtering"},
+  {value: "log",         label: "LoG / Mexican Hat"},
+  {value: "sobel",       label: "Sobel Edge Detection"},   
+  {value: "prewitt",     label: "Prewitt Edge Detection"}, 
+  {value: "wiener",      label: "Wiener Deconvolution"},
+  {value: "richardson",  label: "Richardson-Lucy"},
+  {value: "custom",      label: "Custom 3×3 Mask"},
+];
 
   return (
     <Card className="p-4 mt-4 space-y-6 bg-zinc-800 border-zinc-700">

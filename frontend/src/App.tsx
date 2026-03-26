@@ -3,20 +3,20 @@ import { Toaster, toast } from 'react-hot-toast';
 import UploadDropzone from './components/UploadDropzone';
 import Controls from './components/Controls';
 import CanvasPreview from './components/CanvasPreview';
+import type { CanvasPreviewHandle } from './components/CanvasPreview';   // ← added for correct typing
 
 export default function App() {
   const [imageId, setImageId] = useState<number | null>(null);
-  const [imageUrl, setImageUrl] = useState<string | null>(null);   // ✅ added
-  const [imageBlob, setImageBlob] = useState<Blob | null>(null);   // ✅ added
+  const [imageUrl, setImageUrl] = useState<string | null>(null);
+  const [imageBlob, setImageBlob] = useState<Blob | null>(null);
   const [selectedFilter, setSelectedFilter] = useState("gaussian");
   const [useClientRaster, setUseClientRaster] = useState(true);
   const [customKernel, setCustomKernel] = useState<number[][]>([
     [0, -1, 0], [-1, 5, -1], [0, -1, 0]
   ]);
 
-  const canvasRef = useRef<any>(null);
+  const canvasRef = useRef<CanvasPreviewHandle | null>(null);   // ← better typing
 
-  // ✅ Fix 2: receive all three values from dropzone
   const handleUploadSuccess = (id: number, url: string, blob: Blob) => {
     setImageId(id);
     setImageUrl(url);
@@ -25,7 +25,7 @@ export default function App() {
 
   const startScan = () => {
     if (!imageId) { toast.error("Upload an image first!"); return; }
-    canvasRef.current?.startFilter(selectedFilter, useClientRaster, customKernel);
+    canvasRef.current?.startFilter(selectedFilter, useClientRaster, customKernel, imageId);   // ← now passes correct recordId
     toast.success(`🚀 Scanning with ${selectedFilter}`);
   };
 
@@ -61,8 +61,8 @@ export default function App() {
         <div className="flex-1 flex flex-col items-center justify-center p-8 bg-zinc-900">
           <CanvasPreview
             ref={canvasRef}
-            imageUrl={imageUrl}   // ✅ passed down
-            imageBlob={imageBlob} // ✅ passed down
+            imageUrl={imageUrl}
+            imageBlob={imageBlob}
           />
         </div>
       </div>

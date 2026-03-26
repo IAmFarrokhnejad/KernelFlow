@@ -2,7 +2,6 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Checkbox } from '@/components/ui/checkbox';
-// ✅ removed unused Slider import
 
 export default function Controls({
   selectedFilter, setSelectedFilter,
@@ -32,7 +31,6 @@ const filters = [
         <SelectTrigger className="bg-zinc-700 border-zinc-600 text-white">
           <SelectValue />
         </SelectTrigger>
-        {/* ✅ No position prop (not Base UI API); explicit colors fix invisible items */}
         <SelectContent className="bg-zinc-800 border-zinc-600 text-white z-50">
           {filters.map(f => (
             <SelectItem
@@ -68,10 +66,6 @@ const filters = [
           Use Client-side Raster (fast 3×3 filters)
         </label>
       </div>
-
-      <Button variant="secondary" className="w-full" onClick={() => window.alert("Boost slider etc. can be added here")}>
-        Adjust Strength / KSize
-      </Button>
     </Card>
   );
 }

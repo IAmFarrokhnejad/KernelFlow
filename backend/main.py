@@ -8,7 +8,8 @@ from pathlib import Path
 from app.database.base import engine, get_db, create_tables
 from app.models.image import ImageRecord
 from app.crud.image import create_image_record, update_processed
-from services.filters import process_and_stream   # keep your existing filters file
+from services.filters import process_and_stream, apply_full_filter   # ← added apply_full_filter
+
 
 app = FastAPI(title="PixelScan Image Filter Studio + DB")
 
@@ -42,7 +43,7 @@ async def apply(
     filter_name: str,
     file: UploadFile = File(...),
     params: str = Form("{}"),
-    record_id: int = Form(...),      # pass the id returned from /upload
+    record_id: int = Form(...),
     db: Session = Depends(get_db)
 ):
     img_bytes = await file.read()
@@ -51,15 +52,18 @@ async def apply(
     if len(img.shape) == 2:
         img = cv2.cvtColor(img, cv2.COLOR_GRAY2BGR)
 
+    params_dict = json.loads(params)
+    processed = apply_full_filter(img, filter_name, params_dict)   # ← compute full filtered image
+
     result_filename = f"processed_{record_id}_{filter_name}.jpg"
     result_path = UPLOAD_DIR / result_filename
 
     async def sse_generator():
-        async for frame in process_and_stream(img, filter_name, json.loads(params)):
+        async for frame in process_and_stream(img, filter_name, params_dict):
             if frame == "FINAL_DONE":
-                # Save final result to disk + DB
-                cv2.imwrite(str(result_path), img)   # you can update img with final processed
-                update_processed(db, record_id, filter_name, json.loads(params), str(result_path))
+                # Save final result to disk + DB (now uses the correctly filtered image)
+                cv2.imwrite(str(result_path), processed)
+                update_processed(db, record_id, filter_name, params_dict, str(result_path))
                 yield "data: FINAL_DONE\n\n"
             else:
                 yield f"data: {frame}\n\n"

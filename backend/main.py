@@ -8,7 +8,8 @@ from pathlib import Path
 from app.database.base import engine, get_db, create_tables
 from app.models.image import ImageRecord
 from app.crud.image import create_image_record, update_processed
-from services.filters import process_and_stream, apply_full_filter   # ← added apply_full_filter
+from services.filters import process_and_stream, apply_full_filter
+from services.metrics import compute_metrics, save_metrics_to_csv, save_metrics_plot   # ← NEW
 
 
 app = FastAPI(title="PixelScan Image Filter Studio + DB")
@@ -53,7 +54,14 @@ async def apply(
         img = cv2.cvtColor(img, cv2.COLOR_GRAY2BGR)
 
     params_dict = json.loads(params)
-    processed = apply_full_filter(img, filter_name, params_dict)   # ← compute full filtered image
+    processed = apply_full_filter(img, filter_name, params_dict)
+
+    # Get original filename from DB (used as unique image identifier)
+    record = db.query(ImageRecord).filter(ImageRecord.id == record_id).first()
+    original_filename = record.original_filename if record else f"image_{record_id}"
+
+    # Compute metrics once (before streaming)
+    metrics = compute_metrics(img, processed)
 
     result_filename = f"processed_{record_id}_{filter_name}.jpg"
     result_path = UPLOAD_DIR / result_filename
@@ -61,9 +69,14 @@ async def apply(
     async def sse_generator():
         async for frame in process_and_stream(img, filter_name, params_dict):
             if frame == "FINAL_DONE":
-                # Save final result to disk + DB (now uses the correctly filtered image)
+                # Save final processed image + DB record
                 cv2.imwrite(str(result_path), processed)
                 update_processed(db, record_id, filter_name, params_dict, str(result_path))
+
+                # ← NEW: Save metrics to CSV (append) + generate plot
+                save_metrics_to_csv(original_filename, filter_name, params_dict, metrics)
+                plot_path = save_metrics_plot(img, processed, original_filename, filter_name, metrics)
+
                 yield "data: FINAL_DONE\n\n"
             else:
                 yield f"data: {frame}\n\n"

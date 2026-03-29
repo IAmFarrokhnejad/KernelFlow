@@ -132,6 +132,6 @@ After each filter is applied, the app automatically:
 
 ---
 
-**Made with ❤️ for EENG583 – Digital Image Processing**
+
 
 Enjoy experimenting with filters!

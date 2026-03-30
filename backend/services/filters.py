@@ -101,21 +101,19 @@ def encode_img(img: np.ndarray):
 
 
 async def process_and_stream(img: np.ndarray, filter_name: str, params: dict):
-    """Progressive raster scan using the FIXED full filter (same as batch script)."""
-    h = img.shape[0]
+    h, w = img.shape[:2]
     processed = apply_full_filter(img, filter_name, params)
 
-    # Send original
-    yield encode_img(img)
+    yield encode_img(img)                     # original
 
-    step = 1  # per-row raster
+    for y in range(h):
+        for x in range(w):
+            temp = img.copy()
+            temp[:y] = processed[:y]          # full previous rows
+            if y < h:                         # current row, left-to-right
+                temp[y, :x+1] = processed[y, :x+1]
+            yield encode_img(temp)
+            await asyncio.sleep(0.001)        # very small delay per pixel
 
-    for row in range(step, h + step, step):
-        temp = img.copy()
-        temp[:row] = processed[:row]          # reveal filtered rows
-        yield encode_img(temp)
-        await asyncio.sleep(0.12)             # visible delay
-
-    # Final full-quality image
     yield "FINAL_DONE"
     yield encode_img(processed)
